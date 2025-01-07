@@ -1,6 +1,12 @@
+"use client";
 import Link from "next/link";
+import { useUserDataStore } from "@/stores/useUserDataStore";
 
 export default function Home() {
+  const userLoginData = useUserDataStore((state) => state.userLoginData);
+  const changeData = useUserDataStore((state) => state.changeData);
+  const clearData = useUserDataStore((state) => state.clearData);
+
   return (
     <nav>
       <p>{`env :  ${process.env.NEXT_PUBLIC_ENV}`}</p>
@@ -21,6 +27,22 @@ export default function Home() {
           </li>
         </Link>
       </ul>
+      <button
+        onClick={() =>
+          changeData({
+            refreshToken: "6875e83dfe3a47e1bcd8d557e6b92142.XzIwMjUx",
+            accessToken: "8308225576-14Bd892f69f04aa7b89525a838407f1d.XzIwMjUx",
+          })
+        }
+      >
+        login
+      </button>
+      <br />
+      <button onClick={() => clearData("userData")}>logout</button>
+      <br />
+      <div className="text-center border my-16">
+        {JSON.stringify(userLoginData)}
+      </div>
     </nav>
   );
 }
