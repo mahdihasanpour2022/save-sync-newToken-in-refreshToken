@@ -1,5 +1,5 @@
 import { ApiRoutes } from "@/config/apiRoutes";
-import { Config } from "@/config/config";
+// import { Config } from "@/config/config";
 import Axios, {
   AxiosError,
   AxiosInstance,
@@ -211,7 +211,8 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
 
   console.log("refresh posted .. :");
   return await Axios.post(
-    `${Config.APIURL}${ApiRoutes.refresh_token}`,
+    // `${Config.APIURL}${ApiRoutes.refresh_token}`,
+    `https://kidzyshop.podland.ir/shop/api${ApiRoutes.refresh_token}`,
     {},
     { headers: formData }
   )
