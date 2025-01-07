@@ -11,7 +11,7 @@ import Cookies from "universal-cookie";
 // import { ErrorToast } from "@/lib/reactToastify";
 import createAuthRefreshInterceptor from "axios-auth-refresh";
 // import { LoginDataCookie } from "@/interfaces/loginDataCookie";
-import { userDataStore } from "@/stores/useUserDataStore";
+// import { userDataStore } from "@/stores/useUserDataStore";
 import { cookies } from "next/headers";
 
 const isClient = typeof window !== "undefined";
@@ -210,6 +210,7 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
   // }
 
   console.log("refresh posted .. :");
+
   return await Axios.post(
     // `${Config.APIURL}${ApiRoutes.refresh_token}`,
     `https://kidzyshop.podland.ir/shop/api${ApiRoutes.refresh_token}`,
@@ -234,84 +235,61 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
             data.singleResult.refreshToken
           );
 
-          if (isClient) {
-            // ----------------------------------- in csr => way 1
+          // if (isClient) {
+          //   // ----------------------------------- in csr => way 1
 
-            cookie.set(
-              "userData",
-              {
-                userLoginData: {
-                  ...user.userLoginData,
-                  accessToken: data.singleResult.accessToken,
-                  refreshToken: data.singleResult.refreshToken,
-                },
-              },
-              {
-                path: "/",
-                // httpOnly :true,
-                // secure: true,
-                sameSite: "strict",
-                expires: new Date(Date.now() + 60 * 60 * 24 * 365),
-              }
-            );
+          //   cookie.set(
+          //     "userData",
+          //     {
+          //       userLoginData: {
+          //         ...user.userLoginData,
+          //         accessToken: data.singleResult.accessToken,
+          //         refreshToken: data.singleResult.refreshToken,
+          //       },
+          //     },
+          //     {
+          //       path: "/",
+          //       // httpOnly :true,
+          //       // secure: true,
+          //       sameSite: "strict",
+          //       expires: new Date(Date.now() + 60 * 60 * 24 * 365),
+          //     }
+          //   );
 
-            console.log("c500");
-            // ----------------------------------- in csr with state zustand => way 2
-            const { changeData } = userDataStore();
-            changeData({
-              accessToken: data.singleResult.accessToken,
-              refreshToken: data.singleResult.refreshToken,
-            });
-          }
+          //   console.log("c500");
+          //   // ----------------------------------- in csr with state zustand => way 2
+          //   const { changeData } = userDataStore();
+          //   changeData({
+          //     accessToken: data.singleResult.accessToken,
+          //     refreshToken: data.singleResult.refreshToken,
+          //   });
+          // }
           console.log("c600", userCookie.userLoginData);
           // ----------------------------------- in ssr
-          if (!isClient) {
-            // try {
-            //   cookieStore.set(
-            //     "userData",
-            //     JSON.stringify({
-            //       userLoginData: {
-            //         ...userCookie.userLoginData,
-            //         accessToken: data.singleResult.accessToken,
-            //         refreshToken: data.singleResult.refreshToken,
-            //       },
-            //     }),
-            //     {
-            //       path: "/",
-            //       // secure: true,
-            //       // httpOnly : true,
-            //       sameSite: "strict",
-            //       expires: new Date(Date.now() + 60 * 60 * 24 * 365),
-            //     }
-            //   );
-            // } catch (error) {
-            //   console.error("Error setting cookie:", error);
-            // }
 
-            // اگر برنامه خود را روی یک سرور HTTPS (مانند دامنه‌ای با گواهی SSL) منتشر کنید، مشکل ذخیره کوکی احتمالاً حل خواهد شد.
-            // بیشتر مرورگرها از ذخیره کوکی در HTTP جلوگیری می‌کنند، مگر اینکه تنظیمات خاصی اعمال شده باشد.
+          // اگر برنامه خود را روی یک سرور HTTPS (مانند دامنه‌ای با گواهی SSL) منتشر کنید، مشکل ذخیره کوکی احتمالاً حل خواهد شد.
+          // بیشتر مرورگرها از ذخیره کوکی در HTTP جلوگیری می‌کنند، مگر اینکه تنظیمات خاصی اعمال شده باشد.
 
-            // fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/setCookie`, {
-            //   method: "POST",
-            //   headers: {
-            //     "Content-Type": "application/json",
-            //   },
-            //   body: JSON.stringify({
-            //     accessToken: data.singleResult.accessToken,
-            //     refreshToken: data.singleResult.refreshToken,
-            //   }),
-            // })
-            //   .then((res) => {
-            //     if (!res.ok) {
-            //       throw new Error(`Error: ${res.status}`);
-            //     }
-            //     return res.json();
-            //   })
-            //   .then((data) => console.log("Cookie set successfully:", data))
-            //   .catch((error) =>
-            //     console.error("Error fetching setCookie API:", error)
-            //   );
-          }
+          // fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/setCookie`, {
+          //   method: "POST",
+          //   headers: {
+          //     "Content-Type": "application/json",
+          //   },
+          //   body: JSON.stringify({
+          //     accessToken: data.singleResult.accessToken,
+          //     refreshToken: data.singleResult.refreshToken,
+          //   }),
+          // })
+          //   .then((res) => {
+          //     if (!res.ok) {
+          //       throw new Error(`Error: ${res.status}`);
+          //     }
+          //     return res.json();
+          //   })
+          //   .then((data) => console.log("Cookie set successfully:", data))
+          //   .catch((error) =>
+          //     console.error("Error fetching setCookie API:", error)
+          //   );
 
           console.log("c700", failedRequest);
 
@@ -322,11 +300,6 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
             console.log("failedRequest laaaaaaaaaaast :", failedRequest);
             return Promise.resolve();
           }
-
-          // setTimeout(() => {
-          // failedRequest.response.config.headers["accessToken"] = `${data.singleResult.accessToken}`;
-          // return Promise.resolve();
-          // }, 1000);
         }
       }
     })
