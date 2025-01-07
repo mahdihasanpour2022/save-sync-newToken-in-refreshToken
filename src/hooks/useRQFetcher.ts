@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { CommonRes } from "@/interfaces/commonRes";
 import API from "@/utils/interceptor";
+
 import {
   UseQueryResult,
   useQuery,

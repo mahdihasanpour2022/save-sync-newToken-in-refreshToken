@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { useUserDataStore } from "@/stores/useUserDataStore";
 // import useGetPodProfile from "@/features/A/hooks/useGetPodProfile";
 
@@ -14,9 +13,6 @@ const Acmp = () => {
   // 5192640985-81106611678C4335a1e8258f1231fa28.XzIwMjUx  ===>  expired refresh
   return (
     <div className="flex flex-col">
-      <Link href="/b">
-        <li>{`navigate ====> B`}</li>
-      </Link>
       <div className="text-center border my-16">
         {JSON.stringify(userLoginData)}
       </div>

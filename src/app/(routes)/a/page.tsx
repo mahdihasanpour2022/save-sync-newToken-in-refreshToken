@@ -7,7 +7,8 @@ import {
 import { AxiosError } from "axios";
 import { ApiRoutes } from "@/features/A/constants/ApiRoutes";
 import { cookies } from "next/headers";
-import API from "@/utils/interceptor";
+import API from "@/utils/interceptor_server";
+
 
 const getPodProfile = async () => {
   const cookieStore = await cookies(); // dont use universal in ssr
