@@ -17,7 +17,8 @@ import { cookies } from "next/headers";
 const isClient = typeof window !== "undefined";
 
 const API: AxiosInstance = Axios.create({
-  baseURL: Config.APIURL,
+  // baseURL: Config.APIURL,
+  baseURL: "https://kidzyshop.podland.ir/shop/api",
   paramsSerializer: {
     serialize: (params) => qs.stringify(params, { arrayFormat: "brackets" }), // indices: false  https://www.npmjs.com/package/qs
   },
