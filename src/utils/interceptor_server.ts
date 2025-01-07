@@ -290,27 +290,27 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
 
             // اگر برنامه خود را روی یک سرور HTTPS (مانند دامنه‌ای با گواهی SSL) منتشر کنید، مشکل ذخیره کوکی احتمالاً حل خواهد شد.
             // بیشتر مرورگرها از ذخیره کوکی در HTTP جلوگیری می‌کنند، مگر اینکه تنظیمات خاصی اعمال شده باشد.
-            
-            fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/setCookie`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                accessToken: data.singleResult.accessToken,
-                refreshToken: data.singleResult.refreshToken,
-              }),
-            })
-              .then((res) => {
-                if (!res.ok) {
-                  throw new Error(`Error: ${res.status}`);
-                }
-                return res.json();
-              })
-              .then((data) => console.log('Cookie set successfully:', data))
-              .catch((error) =>
-                console.error("Error fetching setCookie API:", error)
-              );
+
+            // fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/setCookie`, {
+            //   method: "POST",
+            //   headers: {
+            //     "Content-Type": "application/json",
+            //   },
+            //   body: JSON.stringify({
+            //     accessToken: data.singleResult.accessToken,
+            //     refreshToken: data.singleResult.refreshToken,
+            //   }),
+            // })
+            //   .then((res) => {
+            //     if (!res.ok) {
+            //       throw new Error(`Error: ${res.status}`);
+            //     }
+            //     return res.json();
+            //   })
+            //   .then((data) => console.log("Cookie set successfully:", data))
+            //   .catch((error) =>
+            //     console.error("Error fetching setCookie API:", error)
+            //   );
           }
 
           console.log("c700", failedRequest);
