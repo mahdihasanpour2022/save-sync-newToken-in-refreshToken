@@ -1,4 +1,4 @@
-import Ccmp from "@/features/B/components/bcmp";
+import Ccmp from "@/features/C/components/ccmp";
 
 const Cpage = () => {
   return (
