@@ -18,9 +18,9 @@ export default function Home() {
             A_server
           </li>
         </Link>
-        {/* <Link href="/b">
+        <Link href="/b">
           <li className="border w-fit mx-auto px-6 py-4 rounded-full font-bold">B</li>
-        </Link> */}
+        </Link>
         <Link href="/c">
           <li className="border w-fit mx-auto px-6 py-4 rounded-full font-bold">
             C_client

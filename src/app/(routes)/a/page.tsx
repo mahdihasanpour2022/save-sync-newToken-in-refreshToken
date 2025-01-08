@@ -1,3 +1,4 @@
+"use server";
 import Acmp from "@/features/A/components/acmp";
 import {
   HydrationBoundary,
@@ -8,9 +9,11 @@ import { AxiosError } from "axios";
 import { ApiRoutes } from "@/features/A/constants/ApiRoutes";
 import { cookies } from "next/headers";
 import API from "@/utils/interceptor_server";
-
+// import Cookies from "universal-cookie";
 
 const getPodProfile = async () => {
+  console.log("ssr function runed");
+
   const cookieStore = await cookies(); // dont use universal in ssr
   const { userLoginData } = JSON.parse(
     cookieStore.get("userData")?.value || "{}"
@@ -34,6 +37,7 @@ const getPodProfile = async () => {
 };
 
 const Apage = async () => {
+  console.log("ssr 1000");
   const queryClient = new QueryClient();
   // ----------------------------------------- server side prefetch myBusiness
   await queryClient.prefetchQuery({
@@ -43,6 +47,13 @@ const Apage = async () => {
     staleTime: 10000,
     gcTime: 12000,
   });
+
+  // const cookie = new Cookies();
+  // console.log(
+  //   "*****************************************",
+  //   cookie.get("userData")
+  // );
+  // cookie.set("userData2", { name: "mehdi" }, { path: "/" });
 
   return (
     <>

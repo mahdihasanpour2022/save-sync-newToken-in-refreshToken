@@ -22,11 +22,14 @@ export async function POST(request: Request) {
       path: "/", // مسیر کوکی
       httpOnly: false, // اگر می‌خواهید کوکی در دسترس جاوا اسکریپت هم باشد
       // secure: process.env.NEXT_PUBLIC_ENV === "Production", // اگر در محیط توسعه از HTTP استفاده می‌کنید، این گزینه را false قرار دهید
-      secure: true, // اگر در محیط توسعه از HTTP استفاده می‌کنید، این گزینه را false قرار دهید
-      sameSite: "strict", // تغییر از "Lax" به "lax"
-      expires: new Date(Date.now() + 60 * 60 * 24 * 365), // یک سال
+      secure: false, // اگر در محیط توسعه از HTTP استفاده می‌کنید، این گزینه را فالس قرار دهید
+      sameSite: "lax", // تغییر از "Lax" به "lax"
+      // maxAge: 1000 * 60 * 60 * 24 * 7,
+      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365), // یک سال
     }
   );
 
+  response.headers.set("Access-Control-Allow-Origin", "https://localhost:3000");
+  response.headers.set("Access-Control-Allow-Credentials", "true");
   return response;
 }

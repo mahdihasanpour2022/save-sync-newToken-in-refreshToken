@@ -22,7 +22,10 @@ export const useUserDataStore = create<NameStore>()(
         // age: 37
       },
       changeData: (data: object) => {
-        set((state) => ({ ...state, userLoginData: { ...state.userLoginData ,...data } }));
+        set((state) => ({
+          ...state,
+          userLoginData: { ...state.userLoginData, ...data },
+        }));
       },
       clearData: (key: string) => {
         set((state) => ({ ...state, userLoginData: {} }));
@@ -54,10 +57,11 @@ export const useUserDataStore = create<NameStore>()(
             const currentUserData = parsedValue.state;
             cookies.set(key, currentUserData, {
               path: "/",
-              // httpOnly : true ,
-              // secure: true,
-              sameSite: "strict",
-              // expires : new Date(Date.now() + (60 *60*24*365))
+              httpOnly: false,
+              secure: false,
+              sameSite: "lax",
+              maxAge :1000 * 60 * 60 * 24 * 365,
+              expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
             }); // prevent CSRF  attacks
             localStorage.setItem(key, JSON.stringify(currentUserData));
           }
@@ -67,16 +71,14 @@ export const useUserDataStore = create<NameStore>()(
           cookies.remove(key);
         },
       })),
-      onRehydrateStorage: () => (
-        // state
-      ) => {
+      onRehydrateStorage: () => () => // state
+      {
         // وقتی لاگ میگیرد که داده‌های ذخیره‌شده (مثل لوکال یا کوکی) توسط پرسیست بازیابی شده و به استیت منتقل شوند
         // console.log(
         //   "Rehydrated state run => data save in state from local or cookie:",
         //   state
         // );
       },
-      
     }
   )
 );

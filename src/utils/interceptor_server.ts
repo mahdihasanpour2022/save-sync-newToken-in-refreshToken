@@ -14,7 +14,7 @@ import createAuthRefreshInterceptor from "axios-auth-refresh";
 // import { userDataStore } from "@/stores/useUserDataStore";
 import { cookies } from "next/headers";
 
-const isClient = typeof window !== "undefined";
+// const isClient = typeof window !== "undefined";
 
 const API: AxiosInstance = Axios.create({
   // baseURL: Config.APIURL,
@@ -41,39 +41,35 @@ const requestHandler = async (
   }
 
   // ------------------------------------------------------------- csr :  add accessToken in req header with universal
-  if (!isClient) {
-    const cookie = new Cookies(String(request.headers.cookie));
-    const user = cookie.get("userData");
-    console.log("252525 :", user?.userLoginData?.accessToken);
 
-    if (
-      user &&
-      user?.userLoginData?.accessToken &&
-      !request.headers.accessToken
-    ) {
-      console.log("33333 :", user?.userLoginData?.accessToken);
-      request.headers.accessToken = `${user?.userLoginData?.accessToken}`;
-    }
-  }
+  // const cookie = new Cookies(String(request.headers.cookie));
+  // const user = cookie.get("userData");
+  // console.log("252525 :", user?.userLoginData?.accessToken);
+
+  // if (
+  //   user &&
+  //   user?.userLoginData?.accessToken &&
+  //   !request.headers.accessToken
+  // ) {
+  //   console.log("33333 :", user?.userLoginData?.accessToken);
+  //   request.headers.accessToken = `${user?.userLoginData?.accessToken}`;
+  // }
 
   // ------------------------------------------------------------- csr :  add accessToken in req header with universal
-  if (!isClient) {
-    const cookieStore = await cookies();
-    const userDataCookie = cookieStore.get("userData");
-    const userCookie = userDataCookie ? JSON.parse(userDataCookie.value) : null;
-    console.log("6565655 :", userCookie.userLoginData?.accessToken);
+  const cookieStore = await cookies();
+  const userDataCookie = cookieStore.get("userData");
+  const userCookie = userDataCookie ? JSON.parse(userDataCookie.value) : null;
+  console.log("6565655 :", userCookie.userLoginData?.accessToken);
 
-    if (
-      userCookie &&
-      userCookie?.userLoginData?.accessToken &&
-      !request.headers.accessToken
-    ) {
-      console.log("5555 :", userCookie.userLoginData?.accessToken);
-      request.headers[
-        "accessToken"
-      ] = `${userCookie.userLoginData.accessToken}`;
-    }
+  if (
+    userCookie &&
+    userCookie?.userLoginData?.accessToken &&
+    !request.headers.accessToken
+  ) {
+    console.log("5555 :", userCookie.userLoginData?.accessToken);
+    request.headers["accessToken"] = `${userCookie.userLoginData.accessToken}`;
   }
+
   // const cookieStore = await cookies(); // dont use universal in ssr
   // const { userLoginData } = JSON.parse(
   //   cookieStore.get("userData")?.value || "{}"
@@ -264,13 +260,20 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
           //     refreshToken: data.singleResult.refreshToken,
           //   });
           // }
+
           console.log("c600", userCookie.userLoginData);
           // ----------------------------------- in ssr
-
           // اگر برنامه خود را روی یک سرور HTTPS (مانند دامنه‌ای با گواهی SSL) منتشر کنید، مشکل ذخیره کوکی احتمالاً حل خواهد شد.
           // بیشتر مرورگرها از ذخیره کوکی در HTTP جلوگیری می‌کنند، مگر اینکه تنظیمات خاصی اعمال شده باشد.
 
-          fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/setCookie`, {
+          // try {
+          //   const cookieStore = await cookies();
+          //   cookieStore.set("userData", JSON.stringify("s"), {});
+          // } catch (error: any) {
+          //   console.log(error);
+          // }
+
+          fetch(`http://localhost:3000/api/setCookie`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -279,6 +282,7 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
               accessToken: data.singleResult.accessToken,
               refreshToken: data.singleResult.refreshToken,
             }),
+            credentials: "include",
           })
             .then((res) => {
               if (!res.ok) {
@@ -288,10 +292,15 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
             })
             .then((data) => console.log("Cookie set successfully:", data))
             .catch((error) =>
-              console.error("Error fetching setCookie API:", error)
+              console.error(
+                "Error fetching setCookie API:",
+                error,
+                error.message,
+                error.stack
+              )
             );
 
-          console.log("c700", failedRequest);
+          // console.log("c700", failedRequest);
 
           if (failedRequest?.config?.headers) {
             failedRequest.config.headers[
