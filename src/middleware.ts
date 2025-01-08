@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
   const userData = request.cookies.get("userData")?.value;
+
+  console.log("userData in middleware :", userData);
   // const userCookie = userData ? JSON.parse(userData) : null;
   // console.log("userData in middleware :", userCookie?.userLoginData);
   if (!userData) {
