@@ -6,7 +6,7 @@ import {
   dehydrate,
 } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { ApiRoutes } from "@/features/A/constants/ApiRoutes";
+import { ApiRoutes } from "@/features/e/constants/ApiRoutes";
 import { cookies } from "next/headers";
 import API from "@/utils/interceptor_server";
 // import Cookies from "universal-cookie";
@@ -15,22 +15,39 @@ const getPodProfile = async () => {
   console.log("ssr function runed");
 
   const cookieStore = await cookies(); // dont use universal in ssr
-  const { userLoginData } = JSON.parse(
-    cookieStore.get("userData")?.value || "{}"
-  );
+  const userDataCookie = cookieStore.get("userData");
+  const { userLoginData } = userDataCookie
+    ? JSON.parse(userDataCookie.value)
+    : null;
+  // const { userLoginData } = JSON.parse(
+  //   cookieStore.get("userData")?.value || "{}"
+  // );
 
   try {
     const { data } = await API.get(ApiRoutes.podProfile, {
       baseURL: process.env.NEXT_PUBLIC_API_URL,
       headers: { accessToken: `${userLoginData.accessToken}` },
     });
-    console.log("data is carrrrrrrr :", data);
+    console.log("data is ssr getPodProfile :", data);
+
+    // this code can not set cookie
+    // cookieStore.set({
+    //   name: "an",
+    //   value: "ali",
+    //   path: "/",
+    //   httpOnly: false,
+    //   secure: false,
+    //   sameSite: "lax",
+    //   expires: Date.now() + 1000 * 60 * 60 * 24 * 1,
+    // });
+
     return data;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     // console.log("error catcheddddddd :", error);
     if (error instanceof AxiosError) {
       console.log(`error in ssr :${error.response?.status}_${error.code}`);
+      console.log("errorrrrrrrrrrrrrrrrr :", error);
     }
     return null; // error null
   }
@@ -43,9 +60,6 @@ const Apage = async () => {
   await queryClient.prefetchQuery({
     queryKey: ["podProfile"],
     queryFn: getPodProfile,
-    retry: 1,
-    staleTime: 10000,
-    gcTime: 12000,
   });
 
   // const cookie = new Cookies();
@@ -53,7 +67,18 @@ const Apage = async () => {
   //   "*****************************************",
   //   cookie.get("userData")
   // );
-  // cookie.set("userData2", { name: "mehdi" }, { path: "/" });
+
+  //  Error: Cookies can only be modified in a Server Action or Route Handler
+  // const cookieStore = await cookies();
+  // cookieStore.set({
+  //   name: "a1n",
+  //   value: "aliiiiii",
+  //   path: "/",
+  //   httpOnly: false,
+  //   secure: false,
+  //   sameSite: "lax",
+  //   expires: Date.now() + 1000 * 60 * 60 * 24 * 1,
+  // });
 
   return (
     <>

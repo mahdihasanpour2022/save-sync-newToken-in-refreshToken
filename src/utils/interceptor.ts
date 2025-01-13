@@ -22,7 +22,7 @@ const API: AxiosInstance = Axios.create({
 const requestHandler = async (
   request: InternalAxiosRequestConfig
 ): Promise<InternalAxiosRequestConfig> => {
-  console.log("requestttttttttttt :", request.headers.accessToken);
+  console.log("interceptor req :", request.headers.accessToken);
 
   if (!!!request.headers["Accept"]) {
     request.headers["Accept"] = "application/json";
@@ -35,14 +35,18 @@ const requestHandler = async (
   // ------------------------------------------------------------- csr :  add accessToken in req header with universal
   const cookie = new Cookies(String(request.headers.cookie));
   const user = cookie.get("userData");
-  console.log("252525 :", user?.userLoginData?.accessToken);
+  console.log(
+    "accessToken universal-cookie:",
+    user?.userLoginData?.accessToken
+  );
+  console.log("@@@@@@@@@@@@@ in csr", userDataStore().userLoginData);
 
   if (
     user &&
     user?.userLoginData?.accessToken &&
     !request.headers.accessToken
   ) {
-    console.log("33333 :", user?.userLoginData?.accessToken);
+    console.log("request has not access so set accessToken for this request");
     request.headers.accessToken = `${user?.userLoginData?.accessToken}`;
   }
 
@@ -75,7 +79,7 @@ interface AxiosErrorProps extends AxiosError {
 
 const errorHandler = (error: AxiosErrorProps) => {
   const originalRequest = error.config;
-  console.log("error get in errorHandler:", error);
+  // console.log("error get in errorHandler:", error);
 
   if (error.code === "ERR_NETWORK")
     console.log(
@@ -110,28 +114,16 @@ API.interceptors.response.use(
 );
 
 const refreshAuthLogic = async (failedRequest: AxiosError) => {
-  console.log("refreshAuthLogic runned ............");
-
   const cookie = new Cookies(failedRequest?.config?.headers?.cookie || "");
   const user = cookie.get("userData");
-  console.log("refresh runned ....", user);
 
   if (!user || !user?.userLoginData.refreshToken) {
     return Promise.reject();
   }
 
   const formData = {
-    refreshToken: user?.userLoginData?.refreshToken,
+    refreshToken: user?.userLoginData.refreshToken,
   };
-
-  console.log("formData :", formData);
-
-  console.log(
-    "prev accessToken in universal cookie :",
-    user?.userLoginData?.accessToken
-  );
-
-  console.log("refresh posted .. :");
 
   return await Axios.post(
     // `${Config.APIURL}${ApiRoutes.refresh_token}`,
@@ -176,20 +168,18 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
           //   }
           // );
 
-          console.log("c500");
-          // ----------------------------------- in csr with state zustand => way 2
-          const { changeData } = userDataStore();
+          // in csr cookie tokens is uodated
+          const { changeData, userLoginData } = userDataStore();
+          console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", userLoginData);
           changeData({
             accessToken: data.singleResult.accessToken,
             refreshToken: data.singleResult.refreshToken,
           });
 
-          console.log("c700", failedRequest);
-
           // failedRequest.response.config.headers["accessToken"] = `${data.singleResult.accessToken}`;
           // return Promise.resolve();
 
-          if (failedRequest?.config?.headers) {
+          if (failedRequest?.config?.headers && data.singleResult.accessToken) {
             failedRequest.config.headers[
               "accessToken"
             ] = `${data.singleResult.accessToken}`;
@@ -199,9 +189,14 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
         }
       }
     })
-    .catch((error) => {
+    .catch((error: AxiosError) => {
       if (error?.response?.status === 400) {
         console.log("error in interceptor :", error);
+
+        const { clearData } = userDataStore();
+        clearData("userData");
+        window.location.href = "/";
+        // console.log("رفرش توکن منقضی شده بود عملیات رفرش توکن 400 گرفت کوکی و لوکال و استیت حذف شد و به صفحه هوم برگشتی")
       }
     });
 };

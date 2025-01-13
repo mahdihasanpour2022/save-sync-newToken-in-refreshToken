@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ApiRoutes } from "@/config/apiRoutes";
 // import { Config } from "@/config/config";
 import Axios, {
@@ -8,11 +9,10 @@ import Axios, {
 } from "axios";
 import qs from "qs";
 import Cookies from "universal-cookie";
-// import { ErrorToast } from "@/lib/reactToastify";
 import createAuthRefreshInterceptor from "axios-auth-refresh";
-// import { LoginDataCookie } from "@/interfaces/loginDataCookie";
 // import { userDataStore } from "@/stores/useUserDataStore";
 import { cookies } from "next/headers";
+import { userDataStore } from "@/stores/useUserDataStore";
 
 // const isClient = typeof window !== "undefined";
 
@@ -30,7 +30,7 @@ const requestHandler = async (
   // !!!request.headers["Accept"] && (request.headers["Accept"] = "application/json");
   // !!!request.headers["Content-Type"] && (request.headers["Content-Type"] = "application/json");
 
-  console.log("requestttttttttttt :", request.headers.accessToken);
+  console.log("interceptor_server req :", request.headers.accessToken);
 
   if (!!!request.headers["Accept"]) {
     request.headers["Accept"] = "application/json";
@@ -60,6 +60,8 @@ const requestHandler = async (
   const userDataCookie = cookieStore.get("userData");
   const userCookie = userDataCookie ? JSON.parse(userDataCookie.value) : null;
   console.log("6565655 :", userCookie.userLoginData?.accessToken);
+
+  console.log("@@@@@@@@@@@@@",userDataStore().userLoginData)
 
   if (
     userCookie &&
@@ -273,34 +275,49 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
           //   console.log(error);
           // }
 
-          fetch(`http://localhost:3000/api/setCookie`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
+          try {
+            console.log(
+              "Updated Store Data aftererrrrr:",
+              userDataStore().userLoginData
+            );
+            userDataStore().changeData({
               accessToken: data.singleResult.accessToken,
               refreshToken: data.singleResult.refreshToken,
-            }),
-            credentials: "include",
-          })
-            .then((res) => {
-              if (!res.ok) {
-                throw new Error(`Error: ${res.status}`);
-              }
-              return res.json();
-            })
-            .then((data) => console.log("Cookie set successfully:", data))
-            .catch((error) =>
-              console.error(
-                "Error fetching setCookie API:",
-                error,
-                error.message,
-                error.stack
-              )
+            });
+            console.log(
+              "Updated Store Data befterreerrr:",
+              userDataStore().userLoginData
             );
+          } catch (error: any) {
+            console.log("abccccccccc", error);
+          }
 
-          // console.log("c700", failedRequest);
+          // fetch(`http://localhost:3000/api/setCookie`, {
+          //   method: "POST",
+          //   headers: {
+          //     "Content-Type": "application/json",
+          //   },
+          //   body: JSON.stringify({
+          //     accessToken: data.singleResult.accessToken,
+          //     refreshToken: data.singleResult.refreshToken,
+          //   }),
+          //   credentials: "include",
+          // })
+          //   .then((res) => {
+          //     if (!res.ok) {
+          //       throw new Error(`Error: ${res.status}`);
+          //     }
+          //     return res.json();
+          //   })
+          //   .then((data) => console.log("Cookie set successfully:", data))
+          //   .catch((error) => {
+          //     console.error(
+          //       "Error fetching setCookie API:",
+          //       error,
+          //       error.message,
+          //       error.stack
+          //     );
+          //   });
 
           if (failedRequest?.config?.headers) {
             failedRequest.config.headers[
@@ -312,9 +329,21 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
         }
       }
     })
-    .catch((error) => {
+    .catch((error: AxiosError) => {
       if (error?.response?.status === 400) {
-        console.log("error in interceptor :", error);
+        console.log("error in ssr interceptor :", error);
+
+        if (
+          error?.response?.config?.url ===
+          `https://kidzyshop.podland.ir/shop/api${ApiRoutes.refresh_token}`
+        ) {
+          console.log(
+            "refresh error :",
+            error.status,
+            error?.config?.url ===
+              "https://kidzyshop.podland.ir/shop/api/account/refresh-token"
+          );
+        }
       }
     });
 };

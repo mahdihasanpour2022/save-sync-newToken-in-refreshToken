@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // In Next.js, this file would be called: app/providers.jsx => https://tanstack.com/query/latest/docs/framework/react/guides/advanced-ssr
 "use client";
-
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 // Since QueryClientProvider relies on useContext under the hood, we have to put 'use client' on top
 import {
   isServer,
@@ -14,7 +15,28 @@ function makeQueryClient() {
       queries: {
         // With SSR, we usually want to set some default staleTime
         // above 0 to avoid refetching immediately on the client
-        staleTime: 60 * 1000,
+        staleTime: 60 * 1000, // refetch after 1 min
+
+        retry: (failureCount, error: any) => {
+          // console.log("failureCount :", failureCount);
+          // console.log("error in react-query provider :", error);
+
+          // برای درخواست های غیر از گت ریترای نمیکند
+          const method = error?.config?.method;
+          if (method && method.toLowerCase() !== "get") {
+            return false;
+          }
+
+          // اگر خطا 401 باشد، یبار ریترای کن
+          // اگر ریترای 0  باشه وقتی چند تا ریکویست همزمان داریم باعث میشه که فقط اولین درخواست ریکال بشه و مابقی درخواست ها رها خواهند شد.
+          if (error?.response?.status === 401 && failureCount === 1) {
+            return false;
+          }
+          // برای خطاهای دیگر، تا 2 بار ریترای کن
+          return failureCount < 2;
+        },
+        retryOnMount: true,
+        retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000), // تاخیر بین ریترای‌ها - نهایت فاصله بین ریترای ها 5 ثانیه باشد
       },
     },
   });
@@ -44,6 +66,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 
   return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <ReactQueryDevtools initialIsOpen={false} />
+      {children}
+    </QueryClientProvider>
   );
 }

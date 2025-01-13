@@ -1,16 +1,13 @@
 "use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useRQFetcher } from "@/hooks/useRQFetcher";
-import { ApiRoutes } from "@/features/C/constants/ApiRoutes";
+import { ApiRoutes } from "@/features/e/constants/ApiRoutes";
 import { CommonRes } from "@/interfaces/commonRes";
-import { PodProfileResponse } from "@/features/C/interfaces/PodProfileResponse";
 import { useEffect } from "react";
+import { PodProfileResponse } from "@/features/e/interfaces/PodProfileResponse";
 
 const useGetPodProfile = () => {
-  const podProfile = useRQFetcher<
-    CommonRes<PodProfileResponse[]>,
-    CommonRes<any>
-  >({
+  const podProfile = useRQFetcher<CommonRes<any, PodProfileResponse>>({
     url: ApiRoutes.podProfile,
     // baseURL: ,
     queryKey: [`podProfile`],

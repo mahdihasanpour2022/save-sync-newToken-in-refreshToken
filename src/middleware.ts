@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
@@ -6,6 +7,7 @@ export async function middleware(request: NextRequest) {
   console.log("userData in middleware :", userData);
   // const userCookie = userData ? JSON.parse(userData) : null;
   // console.log("userData in middleware :", userCookie?.userLoginData);
+
   if (!userData) {
     console.log("redirect in middleware to home bacause has not cookie");
     return NextResponse.redirect(new URL("/", request.url));
@@ -28,8 +30,10 @@ export async function middleware(request: NextRequest) {
   //   }
   // );
   // return response;
+
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/a", "/b", "/c"],
+  matcher: ["/a", "/b", "/c","/d", "/e"],
 };

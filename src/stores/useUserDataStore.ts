@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import Cookies from "universal-cookie";
+// import { cookies } from "next/headers";
 
 const cookies = new Cookies();
 
@@ -22,6 +23,7 @@ export const useUserDataStore = create<NameStore>()(
         // age: 37
       },
       changeData: (data: object) => {
+        console.log("change data run >>>>>>>>>>>", data);
         set((state) => ({
           ...state,
           userLoginData: { ...state.userLoginData, ...data },
@@ -29,7 +31,7 @@ export const useUserDataStore = create<NameStore>()(
       },
       clearData: (key: string) => {
         set((state) => ({ ...state, userLoginData: {} }));
-        localStorage.removeItem(key);
+        // localStorage.removeItem(key);
         cookies.remove(key);
       },
     }),
@@ -41,33 +43,53 @@ export const useUserDataStore = create<NameStore>()(
         getItem: (key) => {
           // با اولین لود صفحه یا اولین رقرش اگر کوکی شامل دیتای با این نام بود استیت اپدیت میشود
           const cookieValue = cookies.get(key) || null;
+          console.log("gte iten in zustand runed ... ", cookieValue);
           if (cookieValue)
-            return JSON.stringify({ state: cookieValue, version: 0 });
+            // return JSON.stringify({ state: cookieValue, version: 0 });
+            return Promise.resolve(
+              JSON.stringify({ state: cookieValue, version: 0 })
+            );
+          return Promise.resolve(null);
           // اگر میخواهید با رفرش صفحه دیتا قابل استفاده برای اپدیت استیت باشد باید بر این فرمت باشد { state: { ...yourState }, version: number }
           // اگر کوکی شامل دیتایی باین نام نبود لوکال برای اپدیت استیت با مقدار قبلی استفاده میشود.
-          const localValue = localStorage.getItem(key);
-          return localValue
-            ? JSON.stringify({ state: JSON.parse(localValue), version: 0 })
-            : null;
+          // const localValue = localStorage.getItem(key);
+          // return localValue
+          //   ? JSON.stringify({ state: JSON.parse(localValue), version: 0 })
+          //   : null;
         },
-        setItem: (key, value) => {
+        setItem: async (key, value) => {
+          console.log("set item in zustand runed ....", key, value);
           // با هر تغییر استیت بلافاصله در کوکی و لوکال اپدیت میشود
           const parsedValue = value ? JSON.parse(value) : {};
+
           if (parsedValue && parsedValue?.state?.userLoginData) {
+            console.log("set item has userLoginData ... ",parsedValue);
+
             const currentUserData = parsedValue.state;
+            console.log("set item currentUserData",currentUserData);
+
+            // const cookieStore = await cookies();
+            // const userDataCookie = cookieStore.get("userData");
+            // console.log("mehdi 1:", userDataCookie);
+
             cookies.set(key, currentUserData, {
               path: "/",
+              // domain : 'https://localhost:3000',
               httpOnly: false,
-              secure: false,
-              sameSite: "lax",
-              maxAge :1000 * 60 * 60 * 24 * 365,
+              secure: true,
+              sameSite: "strict", // lax
+              maxAge: 1000 * 60 * 60 * 24 * 365,
               expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
             }); // prevent CSRF  attacks
-            localStorage.setItem(key, JSON.stringify(currentUserData));
+
+            const cookieValueAfterSet = cookies.get(key) || null;
+
+            console.log("cookieValueAfterSet", cookieValueAfterSet);
+            // localStorage.setItem(key, JSON.stringify(currentUserData));
           }
         },
         removeItem: (key) => {
-          localStorage.removeItem(key);
+          // localStorage.removeItem(key);
           cookies.remove(key);
         },
       })),
@@ -98,3 +120,8 @@ export const userDataStore = useUserDataStore.getState;
 //     }
 //   });
 // }
+
+// 3 way to get state
+
+// const { changeData , userLoginData } = userDataStore();  in the client that not components like interceptor or functions
+//   const userLoginData = useUserDataStore((state) => state.userLoginData);   in the client that is components

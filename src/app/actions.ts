@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 export async function createCampaignCookie(value: string) {
   if (value === "") return;
    (await cookies()).set({
-    name: "campaign",
+    name: "action-cookie",
     value: value,
     httpOnly: false,
     secure: true,
