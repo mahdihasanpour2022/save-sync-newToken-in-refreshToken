@@ -13,16 +13,15 @@ function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        // retryOnMount: true,
-        // refetchOnWindowFocus: false, // default: true
-        // experimental_prefetchInRender: true, //  queries will be prefetched during render, which can be useful for certain optimization scenarios
-
-        gcTime: 60000,
-        staleTime: 60000, // fetch after 1 min
+        // With SSR, we usually want to set some default staleTime
+        // above 0 to avoid refetching immediately on the client
+        staleTime: 60 * 1000, // refetch after 1 min
 
         retry: (failureCount, error: any) => {
-          console.log("failureCount", failureCount , error );
+          // console.log("failureCount :", failureCount);
+          // console.log("error in react-query provider :", error);
 
+          // برای درخواست های غیر از گت ریترای نمیکند
           const method = error?.config?.method;
           if (method && method.toLowerCase() !== "get") {
             return false;
@@ -30,15 +29,13 @@ function makeQueryClient() {
 
           // اگر خطا 401 باشد، یبار ریترای کن
           // اگر ریترای 0  باشه وقتی چند تا ریکویست همزمان داریم باعث میشه که فقط اولین درخواست ریکال بشه و مابقی درخواست ها رها خواهند شد.
-          if (error?.response?.status === 401 && failureCount >= 1) {
-            console.log("failureCount >>>>>>>>>>>>>", failureCount);
+          if (error?.response?.status === 401 && failureCount === 1) {
             return false;
           }
-
-          // // برای خطاهای دیگر، تا 2 بار ریترای کن
+          // برای خطاهای دیگر، تا 2 بار ریترای کن
           return failureCount < 2;
         },
-
+        retryOnMount: true,
         retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 5000), // تاخیر بین ریترای‌ها - نهایت فاصله بین ریترای ها 5 ثانیه باشد
       },
     },

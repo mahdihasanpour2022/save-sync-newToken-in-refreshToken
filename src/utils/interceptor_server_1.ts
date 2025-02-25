@@ -12,7 +12,7 @@ import createAuthRefreshInterceptor from "axios-auth-refresh";
 import { cookies } from "next/headers";
 // import Cookies from "universal-cookie";
 
-// const isClient = typeof window !== "undefined";
+const isClient = typeof window !== "undefined";
 
 const API: AxiosInstance = Axios.create({
   // baseURL: Config.APIURL,
@@ -83,7 +83,7 @@ const requestHandler = async (
     userCookie?.userLoginData?.accessToken &&
     !request.headers.accessToken
   ) {
-    console.log("5555 :", userCookie.userLoginData?.accessToken);
+    console.log("accessToken :", userCookie.userLoginData?.accessToken);
     request.headers["accessToken"] = `${userCookie.userLoginData.accessToken}`;
   }
 
@@ -131,7 +131,7 @@ interface AxiosErrorProps extends AxiosError {
 
 const errorHandler = (error: AxiosErrorProps) => {
   const originalRequest = error.config;
-  console.log("error in ssr", error);
+  // console.log("in errorHandler", isClient);
 
   if (error.code === "ERR_NETWORK")
     if (
@@ -156,7 +156,6 @@ const errorHandler = (error: AxiosErrorProps) => {
 };
 
 const successHandler = (response: AxiosResponse): AxiosResponse => {
-  // console.log("success >>>>>>>>>>>>>>>>>>>>>>>>>" , response.config.headers["accessToken"] )
   return response;
 };
 
@@ -166,14 +165,9 @@ API.interceptors.response.use(
   (error) => errorHandler(error)
 );
 
-// به منظور جلوگیری از اینکه سمت سرور برای هر درخواست یکبار رفرش انجام نشود اکسس درخواست در متغیر به همراه زمان انقضا ذخیره میشود برای استفاده در درخواست 401 بعدی
-let serverSideAccessToken: {
-  newAccessToken: string;
-  expireTime: number;
-} | null = null;
 
 const refreshAuthLogic = async (failedRequest: AxiosError) => {
-  // console.log("refresh runed ...");
+  console.log("refresh runed ...", isClient);
 
   const cookieStore = await cookies();
   const userDataCookie = cookieStore.get("userData");
@@ -186,71 +180,83 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
     return Promise.reject(new Error("User is not authenticated"));
   }
 
-  console.log(
-    "userLoginData.accessToken ssr:",
-    userLoginData.accessToken,
-    failedRequest?.config?.url
-  );
+  console.log("userLoginData.accessToken :", userLoginData.accessToken);
 
-  if (
-    serverSideAccessToken === null ||
-    serverSideAccessToken.expireTime < Date.now() //  یعنی یا اکسس نداره یا داره ولی منقضی شده پس باید رفرش انجام بشه
-  ) {
-    return await fetch(`http://localhost:3000/api/refreshTokenSsr`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        accessToken: userLoginData.accessToken,
-        refreshToken: userLoginData.refreshToken,
-      }),
-      credentials: "include",
+  return await fetch(`http://localhost:3000/api/refreshTokenSsr`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      accessToken: userLoginData.accessToken,
+      refreshToken: userLoginData.refreshToken,
+    }),
+    credentials: "include",
+  })
+    .then((res) => {
+      console.log("res :", res);
+      if (!res.ok) {
+        throw new Error(`Error: ${res.status}`);
+      }
+      return res.json();
     })
-      .then((res) => {
-        console.log("res :", res);
-        if (!res.ok) {
-          throw new Error(`Error: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        // console.log("data :", data);
+    .then((data) => {
+      console.log("data :", data.accessToken);
 
-        serverSideAccessToken = {
-          newAccessToken: data.accessToken,
-          expireTime: Date.now() + 14 * 60 * 1000,
-        };
+      //  here i want send to middleware
+      console.log("isClient :", isClient);
+      // fetch("http://localhost:3000/api/setCookie", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   credentials: "include",
+      //   body: JSON.stringify({
+      //     cookieName: "myCookie",
+      //     cookieData: { name: "jafar" },
+      //     options: {
+      //       secure: false,
+      //       httpOnly: false,
+      //     },
+      //   }),
+      // })
+      //   .then((response) => response.json())
+      //   .then((data) => console.log("setting cookie: :", data))
+      //   .catch((error) => console.error("Error setting cookie:", error));
 
-        if (failedRequest?.config?.headers) {
-          failedRequest.config.headers["accessToken"] = `${data.accessToken}`;
-          console.log(
-            "failedRequest laaaaaaaaaaast :",
-            failedRequest.config.url,
-            data.accessToken
-          );
-          return Promise.resolve();
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching refresh-token API:", error);
-        if (error?.response?.status === 400) {
-          console.log(error);
-        }
-      });
-  } else {
-    if (
-      failedRequest?.config?.headers &&
-      serverSideAccessToken?.newAccessToken
-    ) {
-      // console.log("serverSideAccessToken :", serverSideAccessToken);
-      failedRequest.config.headers[
-        "accessToken"
-      ] = `${serverSideAccessToken.newAccessToken}`;
-      // console.log("failedRequest laaaaaaaaaaast :", failedRequest);
-      return Promise.resolve();
-    }
-  }
+      // fetch("http://localhost:3000/api/getCookie", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify({ cookieName: "myCookie" }), // ارسال نام کوکی به‌صورت داینامیک
+      // })
+      //   .then((response) => response.json())
+      //   .then((data) => {
+      //     if (data.error) {
+      //       console.error("error in getting cookie :",data);
+      //     } else {
+      //       console.log(`Cookie "${"myCookie"}" value:`, data.cookieValue);
+      //     }
+      //   })
+      //   .catch((error) => console.error("Error retrieving cookie:", error));
+
+      console.log("data.accessToken :", data.accessToken);
+
+      if (failedRequest?.config?.headers ) {
+        failedRequest.config.headers[
+          "accessToken"
+        ] = `${data.accessToken}`;
+        console.log("failedRequest laaaaaaaaaaast :", failedRequest);
+        return Promise.resolve();
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching refresh-token API:", error);
+      if (error?.response?.status === 400) {
+        console.log(error);
+      }
+    });
 };
 
 createAuthRefreshInterceptor(API, refreshAuthLogic, {

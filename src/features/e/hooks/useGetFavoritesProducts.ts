@@ -10,7 +10,7 @@ const useGetFavoritesProducts = () => {
   const favoritesProducts = useRQFetcher<
     CommonRes<FavoritesProductsResponse[], any>
   >({
-    url: `${ApiRoutes.favoritesProducts}?offset=1&size=10`,
+    url: `${ApiRoutes.favoritesProducts}?offset=0&size=50`,
     queryKey: [`favoritesProducts`],
   });
 

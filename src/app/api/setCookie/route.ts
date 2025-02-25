@@ -1,35 +1,48 @@
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const { accessToken = "", refreshToken = "" } = body;
+  try {
+    const { cookieName, cookieData, options } = await request.json();
 
-  // بررسی اینکه مقادیر موجود هستند یا نه
-  if (!accessToken || !refreshToken) {
+    if (!cookieName || !cookieData) {
+      return NextResponse.json(
+        { error: "Cookie name and data are required." },
+        { status: 400 }
+      );
+    }
+
+    // Parse options or set defaults
+    const {
+      httpOnly = true,
+      secure = process.env.NEXT_PUBLIC_ENV === "production",
+      sameSite = process.env.NEXT_PUBLIC_ENV === "production"
+        ? "strict"
+        : "lax",
+      path = "/",
+      maxAge = 60 * 60 * 24 * 7,
+    } = options || {};
+
+    // Set the cookie
+    const response = NextResponse.json({
+      message: "Cookie set successfully",
+      cookieName,
+      cookieData,
+    });
+
+    response.cookies.set(cookieName, JSON.stringify(cookieData), {
+      httpOnly,
+      secure,
+      sameSite,
+      path,
+      maxAge,
+    });
+
+    return response;
+  } catch (error) {
+    console.error("Error setting cookie:", error);
     return NextResponse.json(
-      { error: "Missing accessToken or refreshToken" },
-      { status: 400 }
+      { error: "Failed to set cookie. Please check your request." },
+      { status: 500 }
     );
   }
-
-  const response = NextResponse.json({ message: "Cookie set successfully" });
-
-  // تنظیم کوکی‌ها
-  response.cookies.set(
-    "userData1", // نام کوکی
-    JSON.stringify({ accessToken, refreshToken }), // مقدار کوکی
-    {
-      path: "/", // مسیر کوکی
-      httpOnly: false, // اگر می‌خواهید کوکی در دسترس جاوا اسکریپت هم باشد
-      // secure: process.env.NEXT_PUBLIC_ENV === "Production", // اگر در محیط توسعه از HTTP استفاده می‌کنید، این گزینه را false قرار دهید
-      secure: false, // اگر در محیط توسعه از HTTP استفاده می‌کنید، این گزینه را فالس قرار دهید
-      sameSite: "lax", // تغییر از "Lax" به "lax"
-      // maxAge: 1000 * 60 * 60 * 24 * 7,
-      expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365), // یک سال
-    }
-  );
-
-  response.headers.set("Access-Control-Allow-Origin", "https://localhost:3000");
-  response.headers.set("Access-Control-Allow-Credentials", "true");
-  return response;
 }

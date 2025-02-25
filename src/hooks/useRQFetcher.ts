@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { CommonRes } from "@/interfaces/commonRes";
+import { userDataStore } from "@/stores/useUserDataStore";
 import API from "@/utils/interceptor";
 
 import {
@@ -8,6 +9,10 @@ import {
   UseQueryOptions,
 } from "@tanstack/react-query";
 import { AxiosHeaders, Method, RawAxiosRequestHeaders } from "axios";
+
+// interface WithAccessToken {
+//   accessToken?: string;
+// }
 
 export const useRQFetcher = <TData, TError = CommonRes>({
   url,
@@ -51,5 +56,21 @@ UseQueryOptions<TData, TError> & {
     ...rest,
   });
 
+  // if (queryRes?.data?.["accessToken"]) {
+  const { changeData, userLoginData } = userDataStore();
+
+  // در کامپوننتی که سمت سرور داریم  پری فچ میکنیم از هدر ریسپانس اکسس جدید را برداشته و به سمت کلاینت پاس میدهیم تا اینجا استفاده کنیم برای اپدیت استیت و کوکی و لوکال با اکسس جدید
+  //  در این مرحله چک میکنیم که اگر در ریسپانس کلید اکسس وجود داشت و همان اکسس موجود در استیت نبود (یعنی اکسس جدید است) پس ان را در استیت زاستند ذخیره میکنیم
+  if (
+    queryRes?.data?.["accessToken"] &&
+    queryRes.data["accessToken"] !== userLoginData?.accessToken
+  ) {
+    console.log(">>>>>>>>>>>>>>>>> 1", queryRes.data["accessToken"]);
+    console.log(">>>>>>>>>>>>>>>>> 2", userLoginData);
+
+    changeData({
+      accessToken: queryRes.data["accessToken"],
+    });
+  }
   return { ...queryRes };
 };

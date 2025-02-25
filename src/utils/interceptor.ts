@@ -10,6 +10,7 @@ import qs from "qs";
 import Cookies from "universal-cookie";
 import createAuthRefreshInterceptor from "axios-auth-refresh";
 import { userDataStore } from "@/stores/useUserDataStore";
+// import { cookies } from "next/headers";
 
 const API: AxiosInstance = Axios.create({
   // baseURL: Config.APIURL,
@@ -40,6 +41,12 @@ const requestHandler = async (
     user?.userLoginData?.accessToken
   );
   console.log("@@@@@@@@@@@@@ in csr", userDataStore().userLoginData);
+
+  // error : That only works in a Server Component
+  // const cookieStore = await cookies();
+  // const userDataCookie = cookieStore.get("userData");
+  // const userCookie = userDataCookie ? JSON.parse(userDataCookie.value) : null;
+  // console.log("userCookie incsr :", userCookie);
 
   if (
     user &&
@@ -117,7 +124,7 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
   const cookie = new Cookies(failedRequest?.config?.headers?.cookie || "");
   const user = cookie.get("userData");
 
-  if (!user || !user?.userLoginData.refreshToken) {
+  if (!user || !user?.userLoginData?.refreshToken) {
     return Promise.reject();
   }
 
@@ -132,22 +139,22 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
     { headers: formData }
   )
     .then(({ status, data }) => {
-      console.log("c100");
+      // console.log("c100");
       if (status === 200) {
-        console.log("c200");
+        // console.log("c200");
         if (
           data?.singleResult?.accessToken &&
           data?.singleResult?.refreshToken
         ) {
-          console.log("c300");
+          //   console.log("c300");
 
-          console.log(
-            "c400",
-            "accessToken",
-            data.singleResult.accessToken,
-            "refreshToken",
-            data.singleResult.refreshToken
-          );
+          //   console.log(
+          //     "c400",
+          //     "accessToken",
+          //     data.singleResult.accessToken,
+          //     "refreshToken",
+          //     data.singleResult.refreshToken
+          //   );
 
           // ----------------------------------- in csr => way 1
           // cookie.set(
@@ -169,8 +176,12 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
           // );
 
           // in csr cookie tokens is uodated
-          const { changeData, userLoginData } = userDataStore();
-          console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", userLoginData);
+          const {
+            changeData,
+            // , userLoginData
+          } = userDataStore();
+          // console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>", userLoginData);
+
           changeData({
             accessToken: data.singleResult.accessToken,
             refreshToken: data.singleResult.refreshToken,
@@ -183,7 +194,7 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
             failedRequest.config.headers[
               "accessToken"
             ] = `${data.singleResult.accessToken}`;
-            console.log("failedRequest laaaaaaaaaaast :", failedRequest);
+            // console.log("failedRequest laaaaaaaaaaast :", failedRequest);
             return Promise.resolve();
           }
         }
@@ -192,7 +203,6 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
     .catch((error: AxiosError) => {
       if (error?.response?.status === 400) {
         console.log("error in interceptor :", error);
-
         const { clearData } = userDataStore();
         clearData("userData");
         window.location.href = "/";

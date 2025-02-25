@@ -1,11 +1,64 @@
 "use client";
 import Link from "next/link";
 import { useUserDataStore } from "@/stores/useUserDataStore";
+// import { useEffect } from "react";
 
 export default function Home() {
   const userLoginData = useUserDataStore((state) => state.userLoginData);
   const changeData = useUserDataStore((state) => state.changeData);
   const clearData = useUserDataStore((state) => state.clearData);
+
+  // useEffect(() => {
+  //   // fetch("/api/user", {
+  //   //   method: "GET",
+  //   //   headers: {
+  //   //     "Content-Type": "application/json",
+  //   //   },
+  //   //   credentials: "include",
+  //   // })
+  //   //   .then((response) => response.json())
+  //   //   .then((data) => console.log(data))
+  //   //   .catch((error) => console.error("Error setting cookie:", error));
+
+  //   fetch("/api/setCookie", {
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //     },
+  //     credentials: "include",
+  //     body: JSON.stringify({
+  //       cookieName: "jafar",
+  //       cookieData: { name: "jafar" },
+  //       options: {
+  //         secure: true,
+  //       },
+  //     }),
+  //   })
+  //     .then((response) => response.json())
+  //     .then((data) => console.log(data))
+  //     .catch((error) => console.error("Error setting cookie:", error));
+  // }, []);
+
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     fetch("/api/getCookie", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({ cookieName: "myCookie" }), // ارسال نام کوکی به‌صورت داینامیک
+  //     })
+  //       .then((response) => response.json())
+  //       .then((data) => {
+  //         if (data.error) {
+  //           console.error(data.error);
+  //         } else {
+  //           console.log(`Cookie :`, data.cookieValue);
+  //         }
+  //       })
+  //       .catch((error) => console.error("Error retrieving cookie:", error));
+  //   }, 2000);
+  // }, []);
 
   return (
     <nav>
@@ -56,6 +109,11 @@ export default function Home() {
         <Link href="/e">
           <li className="border w-48 mx-auto py-4 rounded-full font-bold text-white border-white">
             client___(e_3call)
+          </li>
+        </Link>
+        <Link href="/f">
+          <li className="border w-48 mx-auto py-4 rounded-full font-bold text-white border-white">
+            cookie csr & ssr___(f)
           </li>
         </Link>
         {/* <Link href="/b">

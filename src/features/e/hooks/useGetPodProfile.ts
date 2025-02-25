@@ -13,6 +13,7 @@ const useGetPodProfile = () => {
     queryKey: [`podProfile`],
   });
 
+  // console.log("kollllle data", podProfile);
   const { data, isError } = podProfile;
   useEffect(() => {
     if (isError) {

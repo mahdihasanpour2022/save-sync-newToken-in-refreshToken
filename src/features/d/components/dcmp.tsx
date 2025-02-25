@@ -1,9 +1,12 @@
-"use client"
-import useGetFavoritesProducts from "@/features/e/hooks/useGetFavoritesProducts";
+"use client";
 import useGetPodProfile from "@/features/e/hooks/useGetPodProfile";
+import useGetFavoritesProducts from "@/features/e/hooks/useGetFavoritesProducts";
 import useGetUserAddresses from "@/features/e/hooks/useGetUserAddresses";
+import { useUserDataStore } from "@/stores/useUserDataStore";
 
 const Dcmp = () => {
+  const userLoginData = useUserDataStore((state) => state.userLoginData);
+
   const { data: podProfileData } = useGetPodProfile();
   console.log("podProfileData :", podProfileData);
 
@@ -15,13 +18,14 @@ const Dcmp = () => {
 
   return (
     <div className="flex flex-col gap-4 w-full h-screen py-32 items-center">
+      <div className="text-center border mb-16">
+        userLoginData:{JSON.stringify(userLoginData)}
+      </div>
       {podProfileData && <p>{podProfileData?.singleResult.name}</p>}
       {userAddressesData && (
         <p>{userAddressesData.result?.[0].simpleAddress}</p>
       )}
-      {favoritesProducts && (
-        <p>{!favoritesProducts.hasError && "success_200"}</p>
-      )}
+      {favoritesProducts && <p>{favoritesProducts.result?.[0].name}</p>}
     </div>
   );
 };

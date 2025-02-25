@@ -131,7 +131,7 @@ interface AxiosErrorProps extends AxiosError {
 
 const errorHandler = (error: AxiosErrorProps) => {
   const originalRequest = error.config;
-  console.log("error in ssr", error);
+  // console.log("in errorHandler", isClient);
 
   if (error.code === "ERR_NETWORK")
     if (
@@ -156,7 +156,6 @@ const errorHandler = (error: AxiosErrorProps) => {
 };
 
 const successHandler = (response: AxiosResponse): AxiosResponse => {
-  // console.log("success >>>>>>>>>>>>>>>>>>>>>>>>>" , response.config.headers["accessToken"] )
   return response;
 };
 
@@ -166,11 +165,7 @@ API.interceptors.response.use(
   (error) => errorHandler(error)
 );
 
-// به منظور جلوگیری از اینکه سمت سرور برای هر درخواست یکبار رفرش انجام نشود اکسس درخواست در متغیر به همراه زمان انقضا ذخیره میشود برای استفاده در درخواست 401 بعدی
-let serverSideAccessToken: {
-  newAccessToken: string;
-  expireTime: number;
-} | null = null;
+let serverSideAccessToken: string | null = null; // to prevent refresh token for the next ssr 401 stalled request
 
 const refreshAuthLogic = async (failedRequest: AxiosError) => {
   // console.log("refresh runed ...");
@@ -186,16 +181,9 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
     return Promise.reject(new Error("User is not authenticated"));
   }
 
-  console.log(
-    "userLoginData.accessToken ssr:",
-    userLoginData.accessToken,
-    failedRequest?.config?.url
-  );
+  console.log("userLoginData.accessToken :", userLoginData.accessToken);
 
-  if (
-    serverSideAccessToken === null ||
-    serverSideAccessToken.expireTime < Date.now() //  یعنی یا اکسس نداره یا داره ولی منقضی شده پس باید رفرش انجام بشه
-  ) {
+  if (!serverSideAccessToken) {
     return await fetch(`http://localhost:3000/api/refreshTokenSsr`, {
       method: "POST",
       headers: {
@@ -215,20 +203,12 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
         return res.json();
       })
       .then((data) => {
-        // console.log("data :", data);
-
-        serverSideAccessToken = {
-          newAccessToken: data.accessToken,
-          expireTime: Date.now() + 14 * 60 * 1000,
-        };
+        console.log("data :", data.accessToken);
+        serverSideAccessToken = data.accessToken;
 
         if (failedRequest?.config?.headers) {
           failedRequest.config.headers["accessToken"] = `${data.accessToken}`;
-          console.log(
-            "failedRequest laaaaaaaaaaast :",
-            failedRequest.config.url,
-            data.accessToken
-          );
+          console.log("failedRequest laaaaaaaaaaast :", failedRequest);
           return Promise.resolve();
         }
       })
@@ -239,15 +219,9 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
         }
       });
   } else {
-    if (
-      failedRequest?.config?.headers &&
-      serverSideAccessToken?.newAccessToken
-    ) {
-      // console.log("serverSideAccessToken :", serverSideAccessToken);
-      failedRequest.config.headers[
-        "accessToken"
-      ] = `${serverSideAccessToken.newAccessToken}`;
-      // console.log("failedRequest laaaaaaaaaaast :", failedRequest);
+    if (failedRequest?.config?.headers && serverSideAccessToken) {
+      failedRequest.config.headers["accessToken"] = `${serverSideAccessToken}`;
+      console.log("failedRequest laaaaaaaaaaast :", failedRequest);
       return Promise.resolve();
     }
   }
@@ -255,7 +229,7 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
 
 createAuthRefreshInterceptor(API, refreshAuthLogic, {
   statusCodes: [401], // اطمینان از تنظیم کد خطای 401
-  pauseInstanceWhileRefreshing: true,
+  pauseInstanceWhileRefreshing: false,
 });
 
 export default API;

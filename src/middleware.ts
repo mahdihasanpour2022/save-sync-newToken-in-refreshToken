@@ -1,12 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
   const userData = request.cookies.get("userData")?.value;
 
-  console.log("userData in middleware :", userData);
-  // const userCookie = userData ? JSON.parse(userData) : null;
-  // console.log("userData in middleware :", userCookie?.userLoginData);
+  const myCookie = request.cookies.get("myCookie")?.value;
+  console.log("myCookie in middleware is httpOnly : true :", myCookie);
+
+
+  // console.log("userData in middleware :", userData);
+  const userCookie = userData ? JSON.parse(userData) : null;
+  console.log("userData in middleware is httpOnly : false:", userCookie?.userLoginData);
 
   if (!userData) {
     console.log("redirect in middleware to home bacause has not cookie");
@@ -15,11 +18,14 @@ export async function middleware(request: NextRequest) {
 
   // const response = NextResponse.next();
   // response.cookies.set(
-  //   "userData",
+  //   "middleware",
   //   JSON.stringify({
-  //     ...userCookie,
-  //     userLoginData: { ...userCookie?.userLoginData },
+  //     middlewareCoolie :'middleware data'
   //   }),
+  //   // JSON.stringify({
+  //   //   ...userCookie,
+  //   //   userLoginData: { ...userCookie?.userLoginData },
+  //   // }),
   //   {
   //     httpOnly: false,
   //     secure: false,
@@ -35,5 +41,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/a", "/b", "/c","/d", "/e"],
+  matcher: ["/a", "/b", "/c", "/d", "/e"],
 };

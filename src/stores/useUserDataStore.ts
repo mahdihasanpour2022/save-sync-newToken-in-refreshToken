@@ -9,6 +9,8 @@ type NameStore = {
   userLoginData: {
     name?: string;
     age?: number;
+    accessToken?: string;
+    refreshToken?: string;
   };
   changeData: (data: object) => void;
   clearData: (key: string) => void;
@@ -20,10 +22,10 @@ export const useUserDataStore = create<NameStore>()(
     (set) => ({
       userLoginData: {
         // name: "mehdi",
-        // age: 37
+        // age: 37,
       },
       changeData: (data: object) => {
-        console.log("change data run >>>>>>>>>>>", data);
+        // console.log("change data run >>>>>>>>>>>", data);
         set((state) => ({
           ...state,
           userLoginData: { ...state.userLoginData, ...data },
@@ -31,7 +33,7 @@ export const useUserDataStore = create<NameStore>()(
       },
       clearData: (key: string) => {
         set((state) => ({ ...state, userLoginData: {} }));
-        // localStorage.removeItem(key);
+        localStorage.removeItem(key);
         cookies.remove(key);
       },
     }),
@@ -43,30 +45,61 @@ export const useUserDataStore = create<NameStore>()(
         getItem: (key) => {
           // با اولین لود صفحه یا اولین رقرش اگر کوکی شامل دیتای با این نام بود استیت اپدیت میشود
           const cookieValue = cookies.get(key) || null;
-          console.log("gte iten in zustand runed ... ", cookieValue);
-          if (cookieValue)
-            // return JSON.stringify({ state: cookieValue, version: 0 });
+          const localValue = localStorage.getItem(key);
+
+          if (cookieValue) {
+            // اگر لوکال استوریج فاقد این دیتا بود به کمک کوکی و همزمان با اپدیت استیت در لوکال هم ذخیره میشود.
+            if (!localValue) {
+              localStorage.setItem(key, JSON.stringify(cookieValue));
+            }
+            // اگر میخواهید با رفرش صفحه دیتا قابل استفاده برای اپدیت استیت باشد باید بر این فرمت باشد { state: { ...yourState }, version: number }
+            // اگر کوکی شامل دیتایی باین نام نبود لوکال برای اپدیت استیت با مقدار قبلی استفاده میشود.
             return Promise.resolve(
               JSON.stringify({ state: cookieValue, version: 0 })
             );
-          return Promise.resolve(null);
-          // اگر میخواهید با رفرش صفحه دیتا قابل استفاده برای اپدیت استیت باشد باید بر این فرمت باشد { state: { ...yourState }, version: number }
-          // اگر کوکی شامل دیتایی باین نام نبود لوکال برای اپدیت استیت با مقدار قبلی استفاده میشود.
+          }
           // const localValue = localStorage.getItem(key);
           // return localValue
           //   ? JSON.stringify({ state: JSON.parse(localValue), version: 0 })
           //   : null;
+
+          if (localValue) {
+            const parsedValue = JSON.parse(localValue);
+            // اگر کوکی فاقد مقدار باشد، کوکی را همزمان با استیت به کمک لوکال استوریج به‌روزرسانی کنید
+            if (!cookieValue) {
+              cookies.set(key, parsedValue, {
+                path: "/",
+                httpOnly: false,
+                secure: false,
+                sameSite: "lax",
+                maxAge: 1000 * 60 * 60 * 24 * 365,
+                expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
+              });
+            }
+            return Promise.resolve(
+              localValue
+                ? JSON.stringify({ state: parsedValue, version: 0 })
+                : null
+            );
+          }
+          return Promise.resolve(null);
+          // return Promise.resolve(
+          //   localValue
+          //     ? JSON.stringify({ state: JSON.parse(localValue), version: 0 })
+          //     : null
+          // );
+          // return Promise.resolve(null);
         },
         setItem: async (key, value) => {
-          console.log("set item in zustand runed ....", key, value);
+          // console.log("set item in zustand runed ....", key, value);
           // با هر تغییر استیت بلافاصله در کوکی و لوکال اپدیت میشود
           const parsedValue = value ? JSON.parse(value) : {};
 
           if (parsedValue && parsedValue?.state?.userLoginData) {
-            console.log("set item has userLoginData ... ",parsedValue);
+            // console.log("set item has userLoginData ... ", parsedValue);
 
             const currentUserData = parsedValue.state;
-            console.log("set item currentUserData",currentUserData);
+            // console.log("set item currentUserData", currentUserData);
 
             // const cookieStore = await cookies();
             // const userDataCookie = cookieStore.get("userData");
@@ -76,20 +109,25 @@ export const useUserDataStore = create<NameStore>()(
               path: "/",
               // domain : 'https://localhost:3000',
               httpOnly: false,
-              secure: true,
-              sameSite: "strict", // lax
+              // secure true prevent MITM (man-in-the-middle) attack
+              secure: false, // کوکی فقط روی اچ تی تی پی اس ارسال خواهد شد  ==> در دولوپ فالس باشد بهتر است ولی در پروداکشن حتماً ترو بگذارید.
+              //
+              // sameSite: "none", // lax strict none___ اگر دامنه‌ی فرانت‌اند و بک‌اند متفاوت است ، باید این مقدار را نان قرار دهید
+              sameSite: "lax",
               maxAge: 1000 * 60 * 60 * 24 * 365,
               expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 365),
-            }); // prevent CSRF  attacks
+            }); // prevent CSRF attacks
 
-            const cookieValueAfterSet = cookies.get(key) || null;
+            // sameSite: "strict"  ==> فقط وقتی کوکی ارسال می‌شود که کاربر در سایت شما باشد. (امنیت بالاتر، ولی ممکن است روی عملکرد تأثیر بگذارد)
+            // sameSite: "lax"  ===> کوکی در درخواست‌های عادی ارسال می‌شود، ولی در درخواست‌های third-party ارسال نمی‌شود. (تعادلی بین امنیت و عملکرد)
+            // const cookieValueAfterSet = cookies.get(key) || null;
+            // console.log("cookieValueAfterSet", cookieValueAfterSet);
 
-            console.log("cookieValueAfterSet", cookieValueAfterSet);
-            // localStorage.setItem(key, JSON.stringify(currentUserData));
+            localStorage.setItem(key, JSON.stringify(currentUserData));
           }
         },
         removeItem: (key) => {
-          // localStorage.removeItem(key);
+          localStorage.removeItem(key);
           cookies.remove(key);
         },
       })),
