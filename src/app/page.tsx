@@ -111,11 +111,11 @@ export default function Home() {
             client___(e_3call)
           </li>
         </Link>
-        <Link href="/f">
+        {/* <Link href="/f">
           <li className="border w-48 mx-auto py-4 rounded-full font-bold text-white border-white">
             cookie csr & ssr___(f)
           </li>
-        </Link>
+        </Link> */}
         {/* <Link href="/b">
           <li className="border w-48 mx-auto py-4 rounded-full font-bold text-white border-white">
             B

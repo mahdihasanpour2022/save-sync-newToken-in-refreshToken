@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ApiRoutes } from "@/config/apiRoutes";
 // import { Config } from "@/config/config";
 import Axios, {
@@ -60,10 +59,6 @@ const requestHandler = async (
   const cookieStore = await cookies();
   const userDataCookie = cookieStore.get("userData");
   const userCookie = userDataCookie ? JSON.parse(userDataCookie.value) : null;
-
-  const userDataCookieaLL = cookieStore.getAll();
-  console.log("userDataCookieaLL ==============>:", userDataCookieaLL);
-
   // console.log("6565655 :", userCookie.userLoginData?.accessToken, isClient);
 
   // fetch("http://localhost:3000/api/getCookie", {
@@ -171,6 +166,13 @@ API.interceptors.response.use(
   (error) => errorHandler(error)
 );
 
+// به منظور جلوگیری از اینکه سمت سرور برای هر درخواست یکبار رفرش انجام نشود اکسس درخواست در متغیر به همراه زمان انقضا ذخیره میشود برای استفاده در درخواست 401 بعدی
+let serverSideAccessToken: {
+  // userRefreshToken: string;
+  newAccessToken: string;
+  expireTime: number;
+} | null = null;
+
 const refreshAuthLogic = async (failedRequest: AxiosError) => {
   // console.log("refresh runed ...");
 
@@ -201,69 +203,70 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
   //   )
   // );
 
-  return await fetch(`http://localhost:3000/api/refreshTokenSsr`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      accessToken: userLoginData.accessToken,
-      refreshToken: userLoginData.refreshToken,
-    }),
-    credentials: "include",
-  })
-    .then((res) => {
-      console.log("res :", res);
-      if (!res.ok) {
-        throw new Error(`Error: ${res.status}`);
-      }
-      return res.json();
+  if (
+    serverSideAccessToken === null ||
+    serverSideAccessToken.expireTime < Date.now()//  یعنی یا اکسس نداره یا داره ولی منقضی شده پس باید رفرش انجام بشه
+    // ||  !!(
+    //   serverSideAccessToken?.userRefreshToken &&
+    //   serverSideAccessToken.userRefreshToken !== userLoginData.refreshToken
+    // ) // یعنی کاربره دیگری است
+  ) {
+    return await fetch(`http://localhost:3000/api/refreshTokenSsr`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        accessToken: userLoginData.accessToken,
+        refreshToken: userLoginData.refreshToken,
+      }),
+      credentials: "include",
     })
-    .then((data) => {
-      // console.log("data :", data);
-      if (!data?.accessToken || !data?.refreshToken) {
-        return;
-      }
+      .then((res) => {
+        console.log("res :", res);
+        if (!res.ok) {
+          throw new Error(`Error: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        // console.log("data :", data);
 
-      // try {
-      //   fetch("http://localhost:3000/api/setCookie", {
-      //     method: "POST",
-      //     headers: {
-      //       "Content-Type": "application/json",
-      //     },
-      //     body: JSON.stringify({
-      //       cookieName: "accessTokenCookie",
-      //       cookieData: { accessToken: data.accessToken },
-      //       options: {
-      //         secure: false,
-      //         httpOnly: false,
-      //       },
-      //     }),
-      //     credentials: "include",
-      //   })
-      //     .then((response) => response.json())
-      //     .then((data) => console.log("setting cookie: :", data))
-      //     .catch((error) => console.error("Error setting cookie:", error));
-      // } catch (error: any) {
-      //   console.log("error in setcookie ssr :", error);
-      // }
+        serverSideAccessToken = {
+          // userRefreshToken: data.refreshToken,
+          newAccessToken: data.accessToken,
+          expireTime: Date.now() + 14 * 60 * 1000,
+        };
 
-      if (failedRequest?.config?.headers) {
-        failedRequest.config.headers["accessToken"] = `${data.accessToken}`;
-        console.log(
-          "failedRequest laaaaaaaaaaast :",
-          failedRequest.config.url,
-          data.accessToken
-        );
-        return Promise.resolve();
-      }
-    })
-    .catch((error) => {
-      console.error("Error fetching refresh-token API:", error);
-      if (error?.response?.status === 400) {
-        console.log(error);
-      }
-    });
+        if (failedRequest?.config?.headers) {
+          failedRequest.config.headers["accessToken"] = `${data.accessToken}`;
+          console.log(
+            "failedRequest laaaaaaaaaaast :",
+            failedRequest.config.url,
+            data.accessToken
+          );
+          return Promise.resolve();
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching refresh-token API:", error);
+        if (error?.response?.status === 400) {
+          console.log(error);
+        }
+      });
+  } else {
+    if (
+      failedRequest?.config?.headers &&
+      serverSideAccessToken?.newAccessToken
+    ) {
+      // console.log("serverSideAccessToken :", serverSideAccessToken);
+      failedRequest.config.headers[
+        "accessToken"
+      ] = `${serverSideAccessToken.newAccessToken}`;
+      // console.log("failedRequest laaaaaaaaaaast :", failedRequest);
+      return Promise.resolve();
+    }
+  }
 };
 
 createAuthRefreshInterceptor(API, refreshAuthLogic, {

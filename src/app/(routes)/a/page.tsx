@@ -30,7 +30,6 @@ const getPodProfile = async () => {
     // console.log("response in getPodProfile :", config.headers["accessToken"]);
 
     return {...data, accessToken : config.headers["accessToken"]};
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     // console.log("error catcheddddddd :", error);
     if (error instanceof AxiosError) {

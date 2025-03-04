@@ -65,8 +65,8 @@ UseQueryOptions<TData, TError> & {
     queryRes?.data?.["accessToken"] &&
     queryRes.data["accessToken"] !== userLoginData?.accessToken
   ) {
-    console.log(">>>>>>>>>>>>>>>>> 1", queryRes.data["accessToken"]);
-    console.log(">>>>>>>>>>>>>>>>> 2", userLoginData);
+    console.log("access token in data recived in client RQFecher hook >>>>>>>>>>>>>>>>> 1", queryRes.data["accessToken"]);
+    console.log(" state management access in client RQFecher hook >>>>>>>>>>>>>>>>> 2", userLoginData);
 
     changeData({
       accessToken: queryRes.data["accessToken"],

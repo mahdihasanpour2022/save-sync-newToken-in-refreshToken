@@ -11,6 +11,7 @@ const page = async () => {
 
   const ssrCookie = cookieStore.get("ssrCookie _set in csr");
   console.log("ssrCookie >>>>>>> :", ssrCookie);
+  
   const cookieValue = ssrCookie?.value ? JSON.parse(ssrCookie.value) : undefined;
   console.log("ssr jafarCookies :", cookieValue);
 

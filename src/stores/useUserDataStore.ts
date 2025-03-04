@@ -5,13 +5,15 @@ import Cookies from "universal-cookie";
 
 const cookies = new Cookies();
 
+export type UserDataType = {
+  name?: string;
+  age?: number;
+  accessToken?: string;
+  refreshToken?: string;
+};
+
 type NameStore = {
-  userLoginData: {
-    name?: string;
-    age?: number;
-    accessToken?: string;
-    refreshToken?: string;
-  };
+  userLoginData: UserDataType;
   changeData: (data: object) => void;
   clearData: (key: string) => void;
 };
@@ -104,7 +106,8 @@ export const useUserDataStore = create<NameStore>()(
             // const cookieStore = await cookies();
             // const userDataCookie = cookieStore.get("userData");
             // console.log("mehdi 1:", userDataCookie);
-
+            
+            // ذخیره کوکی سمت کلاینت
             cookies.set(key, currentUserData, {
               path: "/",
               // domain : 'https://localhost:3000',
@@ -123,7 +126,7 @@ export const useUserDataStore = create<NameStore>()(
             // const cookieValueAfterSet = cookies.get(key) || null;
             // console.log("cookieValueAfterSet", cookieValueAfterSet);
 
-            localStorage.setItem(key, JSON.stringify(currentUserData));
+            // localStorage.setItem(key, JSON.stringify(currentUserData));
           }
         },
         removeItem: (key) => {

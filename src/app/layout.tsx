@@ -1,9 +1,8 @@
-// "use client";
 import type { Metadata } from "next";
 import QueryClientProvider from "@/providers/QueryClientProvider";
 import "./globals.css";
 // import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-// import { useEffect } from "react";
+// import DisableWorkbox from "@/components/common/disableWorkbox";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -53,6 +52,7 @@ export default function RootLayout({
     <html lang="en">
       <body suppressHydrationWarning className="antialiased">
         <QueryClientProvider>
+          {/* <DisableWorkbox /> */}
           {/* <ReactQueryDevtools initialIsOpen={false} /> */}
           {children}
         </QueryClientProvider>
