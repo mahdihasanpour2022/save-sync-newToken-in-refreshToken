@@ -56,7 +56,6 @@ UseQueryOptions<TData, TError> & {
     ...rest,
   });
 
-  // if (queryRes?.data?.["accessToken"]) {
   const { changeData, userLoginData } = userDataStore();
 
   // در کامپوننتی که سمت سرور داریم  پری فچ میکنیم از هدر ریسپانس اکسس جدید را برداشته و به سمت کلاینت پاس میدهیم تا اینجا استفاده کنیم برای اپدیت استیت و کوکی و لوکال با اکسس جدید
@@ -65,8 +64,14 @@ UseQueryOptions<TData, TError> & {
     queryRes?.data?.["accessToken"] &&
     queryRes.data["accessToken"] !== userLoginData?.accessToken
   ) {
-    console.log("access token in data recived in client RQFecher hook >>>>>>>>>>>>>>>>> 1", queryRes.data["accessToken"]);
-    console.log(" state management access in client RQFecher hook >>>>>>>>>>>>>>>>> 2", userLoginData);
+    console.log(
+      "access token in data recived in client RQFecher hook >>>>>>>>>>>>>>>>> 1",
+      queryRes.data["accessToken"]
+    );
+    console.log(
+      " state management access in client RQFecher hook >>>>>>>>>>>>>>>>> 2",
+      userLoginData
+    );
 
     changeData({
       accessToken: queryRes.data["accessToken"],

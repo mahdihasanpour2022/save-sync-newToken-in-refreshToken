@@ -32,8 +32,11 @@ const fetcherSsr = async (endpoint: string) => {
       baseURL: process.env.NEXT_PUBLIC_API_URL,
       headers: { accessToken: `${userLoginData.accessToken}` },
     });
-    console.log("data is ssrFetcher :", data);
-    return { ...data.data, accessToken: data.config.headers["accessToken"] };
+    // console.log("data is ssrFetcher :", data.data);
+    console.log("data is ssrFetcher :", data.config.headers["accessToken"] );
+    return {...data.data, accessToken : data.config.headers["accessToken"]};
+
+    // return data.data;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {

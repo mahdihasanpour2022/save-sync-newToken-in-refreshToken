@@ -10,6 +10,7 @@ import { AxiosError } from "axios";
 import { ApiRoutes } from "@/features/e/constants/ApiRoutes";
 import { cookies } from "next/headers";
 import API from "@/utils/interceptor_server";
+
 // import Cookies from "universal-cookie";
 
 const getPodProfile = async () => {
@@ -22,14 +23,14 @@ const getPodProfile = async () => {
     : null;
 
   try {
-    const { data, config } = await API.get(ApiRoutes.podProfile, {
+    const data = await API.get(ApiRoutes.podProfile, {
       baseURL: process.env.NEXT_PUBLIC_API_URL,
       headers: { accessToken: `${userLoginData.accessToken}` },
     });
-    console.log("data is ssr getPodProfile :", data);
-    // console.log("response in getPodProfile :", config.headers["accessToken"]);
+    // console.log("data is ssr getPodProfile :", data.data);
+    return {...data.data, accessToken : data.config.headers["accessToken"]};
 
-    return {...data, accessToken : config.headers["accessToken"]};
+    // return data.data;
   } catch (error: any) {
     // console.log("error catcheddddddd :", error);
     if (error instanceof AxiosError) {

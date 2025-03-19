@@ -171,20 +171,43 @@ API.interceptors.response.use(
 );
 
 const refreshAuthLogic = async (failedRequest: AxiosError) => {
+  console.log("refresh runed ...", failedRequest.config.headers["accessToken"]);
+  console.log(
+    "API.defaults.headers.common.accessToken ...",
+    API.defaults.headers.common["accessToken"]
+  );
+
   const cookieStore = await cookies();
   const userDataCookie = cookieStore.get("userData");
   const { userLoginData } = userDataCookie
     ? JSON.parse(userDataCookie.value)
     : null;
+
   if (!userLoginData || !userLoginData.refreshToken) {
     return Promise.reject();
   }
 
+  console.log(
+    "userLoginData.accessToken ssr:",
+    userLoginData.accessToken,
+    failedRequest?.config?.url
+  );
+
+  // console.log(
+  //   "serverSideAccessToken ***********************************************:",
+  //   serverSideAccessToken,
+  //   userLoginData.refreshToken,
+  //   !!(
+  //     serverSideAccessToken?.userRefreshToken &&
+  //     serverSideAccessToken?.userRefreshToken !== userLoginData.refreshToken
+  //   )
+  // );
+
   if (
-    !API.defaults.headers.common["refreshedAccessToken"] ||
+    !API.defaults.headers.common["accessToken"] ||
     +API.defaults.headers.common["expireTime"] < Date.now()
   ) {
-    console.log("رفرررررررررررررررررررررررررررررررررررررررررررررررررررررش شد");
+    console.log("رفتیم واسه رفرش توکن  ...");
     return await fetch(`http://localhost:3000/api/refreshTokenSsr`, {
       method: "POST",
       headers: {
@@ -197,6 +220,7 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
       credentials: "include",
     })
       .then((res) => {
+        console.log("res :", res);
         if (!res.ok) {
           throw new Error(`Error: ${res.status}`);
         }
@@ -207,28 +231,61 @@ const refreshAuthLogic = async (failedRequest: AxiosError) => {
         if (!data?.accessToken || !data?.refreshToken) {
           return;
         }
-        API.defaults.headers.common[
-          "refreshedAccessToken"
-        ] = `${data?.accessToken}`;
+
+        API.defaults.headers.common["accessToken"] = `${data?.accessToken}`;
         API.defaults.headers.common["expireTime"] = `${
           Date.now() + 1000 * 60 * 14
         }`;
+
+        // try {
+        //   fetch("http://localhost:3000/api/setCookie", {
+        //     method: "POST",
+        //     headers: {
+        //       "Content-Type": "application/json",
+        //     },
+        //     body: JSON.stringify({
+        //       cookieName: "accessTokenCookie",
+        //       cookieData: { accessToken: data.accessToken },
+        //       options: {
+        //         secure: false,
+        //         httpOnly: false,
+        //       },
+        //     }),
+        //     credentials: "include",
+        //   })
+        //     .then((response) => response.json())
+        //     .then((data) => console.log("setting cookie: :", data))
+        //     .catch((error) => console.error("Error setting cookie:", error));
+        // } catch (error: any) {
+        //   console.log("error in setcookie ssr :", error);
+        // }
+
         if (failedRequest?.config?.headers) {
           failedRequest.config.headers["accessToken"] = `${data.accessToken}`;
+          console.log(
+            "failedRequest laaaaaaaaaaast :",
+            failedRequest.config.url,
+            data.accessToken
+          );
           return Promise.resolve();
         }
       })
       .catch((error) => {
-        // console.error("Error fetching refresh-token API:", error);
+        console.error("Error fetching refresh-token API:", error);
         if (error?.response?.status === 400) {
-          console.log("Error fetching refresh-token API:", error);
+          console.log(error);
         }
       });
   } else {
     if (failedRequest?.config?.headers) {
       failedRequest.config.headers[
         "accessToken"
-      ] = `${API.defaults.headers.common["refreshedAccessToken"]}`;
+      ] = `${API.defaults.headers.common["accessToken"]}`;
+      console.log(
+        "failedRequest laaaaaaaaaaast :",
+        failedRequest.config.url,
+        API.defaults.headers.common["accessToken"]
+      );
       return Promise.resolve();
     }
   }
